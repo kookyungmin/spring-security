@@ -1,5 +1,7 @@
 plugins {
     id 'java'
+    id 'org.springframework.boot' version '2.7.7'
+    id 'io.spring.dependency-management' version '1.0.11.RELEASE'
 }
 
 group 'net.happykoo'
@@ -9,9 +11,23 @@ repositories {
     mavenCentral()
 }
 
+ext {
+    boot = 'org.springframework.boot'
+    lombok = 'org.projectlombok:lombok'
+    jupiter = 'org.junit.jupiter'
+}
+
 dependencies {
-    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
-    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
+    implementation "$boot:spring-boot-starter-web"
+    implementation "$boot:spring-boot-starter-security"
+    compileOnly lombok
+    testCompileOnly lombok
+    annotationProcessor lombok
+    testAnnotationProcessor lombok
+
+    testImplementation "$boot:spring-boot-starter-test"
+    testImplementation "${jupiter}:junit-jupiter-api:5.8.1"
+    testRuntimeOnly "${jupiter}:junit-jupiter-engine:5.8.1"
 }
 
 test {
