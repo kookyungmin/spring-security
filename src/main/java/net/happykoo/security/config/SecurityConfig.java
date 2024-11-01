@@ -13,48 +13,48 @@ import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
-//@EnableWebSecurity(debug = true)
+@EnableWebSecurity(debug = true)
 //prePost로 권한 설정 작동
-@EnableGlobalMethodSecurity(prePostEnabled = true)
+//@EnableGlobalMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
-    @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        //기본적으로 셋팅되어 있음
-        http.authorizeRequests((requests) -> {
-           requests.antMatchers("/ch1/").permitAll()
-                   .anyRequest().authenticated();
-        });
-
-        http.formLogin();
-        http.httpBasic();
-
-        return http.build();
-    }
+//    @Bean
+//    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+//        //기본적으로 셋팅되어 있음
+//        http.authorizeRequests((requests) -> {
+//           requests.antMatchers("/ch1/").permitAll()
+//                   .anyRequest().authenticated();
+//        });
+//
+//        http.formLogin();
+//        http.httpBasic();
+//
+//        return http.build();
+//    }
 //
 //    @Bean
 //    public WebSecurityCustomizer webSecurityCustomizer() {
 //        return (web) -> web.ignoring().requestMatchers();
 //    }
 
-    @Bean
-    public InMemoryUserDetailsManager userDetailsManager() {
-        UserDetails user = User.builder()
-                .username("user1")
-                .password(passwordEncoder().encode("1111"))
-                .roles("USER")
-                .build();
+//    @Bean
+//    public InMemoryUserDetailsManager userDetailsManager() {
+//        UserDetails user = User.builder()
+//                .username("user1")
+//                .password(passwordEncoder().encode("1111"))
+//                .roles("USER")
+//                .build();
+//
+//        UserDetails admin = User.builder()
+//                .username("user2")
+//                .password(passwordEncoder().encode("1111"))
+//                .roles("ADMIN")
+//                .build();
+//
+//        return new InMemoryUserDetailsManager(user, admin);
+//    }
 
-        UserDetails admin = User.builder()
-                .username("user2")
-                .password(passwordEncoder().encode("1111"))
-                .roles("ADMIN")
-                .build();
-
-        return new InMemoryUserDetailsManager(user, admin);
-    }
-
-    @Bean
-    PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
+//    @Bean
+//    PasswordEncoder passwordEncoder() {
+//        return new BCryptPasswordEncoder();
+//    }
 }
