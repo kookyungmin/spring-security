@@ -6,7 +6,7 @@
   <component name="ChangeListManager">
     <list default="true" id="f1415611-2111-477b-9306-e672bae89850" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/build.gradle" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/net/happykoo/security/config/SecurityConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/net/happykoo/security/config/SecurityConfig.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -142,7 +142,7 @@
       <workItem from="1732235184035" duration="2148000" />
       <workItem from="1732593183844" duration="1195000" />
       <workItem from="1732667319368" duration="1194000" />
-      <workItem from="1732841881554" duration="2174000" />
+      <workItem from="1732841881554" duration="15802000" />
     </task>
     <servers />
   </component>
