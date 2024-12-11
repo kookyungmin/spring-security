@@ -1,7 +1,9 @@
 package net.happykoo.security.config;
 
+import lombok.RequiredArgsConstructor;
 import net.happykoo.security.authentication.UserAuthenticationProvider;
 import net.happykoo.security.filter.CustomUsernamePasswordAuthenticationFilter;
+import net.happykoo.security.service.UserService;
 import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -14,18 +16,24 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.NoOpPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import javax.servlet.http.HttpServletResponse;
+import java.nio.file.Path;
 
 @Configuration
 @EnableWebSecurity(debug = true)
 //prePost로 권한 설정 작동
 @EnableGlobalMethodSecurity(prePostEnabled = true)
+@RequiredArgsConstructor
 public class SecurityConfig {
+    private final UserService userService;
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http,
                                            AuthenticationManager authenticationManager) throws Exception {
@@ -77,7 +85,7 @@ public class SecurityConfig {
     @Bean
     public WebSecurityCustomizer webSecurityCustomizer() {
         //web resource 인증 통과
-        return (web) -> web.ignoring().requestMatchers(PathRequest.toStaticResources().atCommonLocations());
+        return (web) -> web.ignoring().requestMatchers(PathRequest.toStaticResources().atCommonLocations(), PathRequest.toH2Console());
     }
 
     //Inmemory
@@ -98,21 +106,29 @@ public class SecurityConfig {
 //        return new InMemoryUserDetailsManager(user, admin);
 //    }
 
+//    @Bean
+//    public AuthenticationProvider authenticationProvider() {
+//        return new UserAuthenticationProvider();
+//    }
+//
+//    @Bean
+//    public AuthenticationManager authenticationManager(HttpSecurity http,
+//                                                       AuthenticationProvider authenticationProvider) throws Exception {
+//        return http.getSharedObject(AuthenticationManagerBuilder.class)
+//                .authenticationProvider(authenticationProvider)
+//                .build();
+//    }
     @Bean
-    public AuthenticationProvider userAuthenticationProvider() {
-        return new UserAuthenticationProvider();
-    }
-
-    @Bean
-    public AuthenticationManager authenticationManager(HttpSecurity http,
-                                                       AuthenticationProvider userAuthenticationProvider) throws Exception {
+    public AuthenticationManager authenticationManager(HttpSecurity http) throws Exception {
         return http.getSharedObject(AuthenticationManagerBuilder.class)
-                .authenticationProvider(userAuthenticationProvider)
+                .userDetailsService(userService)
+                .and()
                 .build();
     }
 
     @Bean
     PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
+//        return new BCryptPasswordEncoder();
+        return NoOpPasswordEncoder.getInstance();
     }
 }

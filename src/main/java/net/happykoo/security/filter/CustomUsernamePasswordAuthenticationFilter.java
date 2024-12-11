@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import net.happykoo.security.authentication.UserAuthenticationToken;
 import net.happykoo.security.dto.LoginDto;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
@@ -39,11 +40,11 @@ public class CustomUsernamePasswordAuthenticationFilter extends UsernamePassword
 
         try (InputStream inputStream = request.getInputStream()) {
             LoginDto loginDto = mapper.readValue(inputStream, LoginDto.class);
-            UserAuthenticationToken token = UserAuthenticationToken.builder()
-                    .credentials(loginDto.getId())
-                    .build();
+//            UserAuthenticationToken token = UserAuthenticationToken.builder()
+//                    .credentials(loginDto.getId())
+//                    .build();
 
-            return this.getAuthenticationManager().authenticate(token);
+            return this.getAuthenticationManager().authenticate(new UsernamePasswordAuthenticationToken(loginDto.getId(), loginDto.getPassword()));
         } catch (IOException e) {
             throw new RuntimeException("Content Type is not application/json");
         }
