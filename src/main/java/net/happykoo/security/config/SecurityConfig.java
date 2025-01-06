@@ -2,6 +2,8 @@ package net.happykoo.security.config;
 
 import lombok.RequiredArgsConstructor;
 import net.happykoo.security.authentication.UserAuthenticationProvider;
+import net.happykoo.security.domain.Authority;
+import net.happykoo.security.domain.User;
 import net.happykoo.security.filter.CustomUsernamePasswordAuthenticationFilter;
 import net.happykoo.security.service.UserService;
 import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
@@ -23,8 +25,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+import javax.annotation.PostConstruct;
 import javax.servlet.http.HttpServletResponse;
 import java.nio.file.Path;
+import java.util.Set;
 
 @Configuration
 @EnableWebSecurity(debug = true)
@@ -88,36 +92,6 @@ public class SecurityConfig {
         return (web) -> web.ignoring().requestMatchers(PathRequest.toStaticResources().atCommonLocations(), PathRequest.toH2Console());
     }
 
-    //Inmemory
-//    @Bean
-//    public InMemoryUserDetailsManager userDetailsManager() {
-//        UserDetails user = User.builder()
-//                .username("user1")
-//                .password(passwordEncoder().encode("1111"))
-//                .roles("USER")
-//                .build();
-//
-//        UserDetails admin = User.builder()
-//                .username("user2")
-//                .password(passwordEncoder().encode("1111"))
-//                .roles("ADMIN")
-//                .build();
-//
-//        return new InMemoryUserDetailsManager(user, admin);
-//    }
-
-//    @Bean
-//    public AuthenticationProvider authenticationProvider() {
-//        return new UserAuthenticationProvider();
-//    }
-//
-//    @Bean
-//    public AuthenticationManager authenticationManager(HttpSecurity http,
-//                                                       AuthenticationProvider authenticationProvider) throws Exception {
-//        return http.getSharedObject(AuthenticationManagerBuilder.class)
-//                .authenticationProvider(authenticationProvider)
-//                .build();
-//    }
     @Bean
     public AuthenticationManager authenticationManager(HttpSecurity http) throws Exception {
         return http.getSharedObject(AuthenticationManagerBuilder.class)
@@ -130,5 +104,17 @@ public class SecurityConfig {
     PasswordEncoder passwordEncoder() {
 //        return new BCryptPasswordEncoder();
         return NoOpPasswordEncoder.getInstance();
+    }
+
+    @PostConstruct
+    public void initializeDb() {
+        if (!userService.findUserByEmail("rudals4549").isPresent()) {
+            User user = userService.save(User.builder()
+                    .email("rudals4549")
+                    .enabled(true)
+                    .password("1234")
+                    .build());
+            userService.addAuthority(user.getUserId(), "ROLE_USER");
+        }
     }
 }

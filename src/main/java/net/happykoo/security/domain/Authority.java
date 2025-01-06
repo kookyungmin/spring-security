@@ -3,10 +3,7 @@ package net.happykoo.security.domain;
 import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import javax.persistence.*;
 
 @Getter
 @Setter
@@ -15,6 +12,7 @@ import javax.persistence.Table;
 @Builder
 @Entity
 @Table(name = "sp_user_authority")
+@IdClass(Authority.class)
 public class Authority implements GrantedAuthority {
     @Id
     @Column(name = "user_id")
