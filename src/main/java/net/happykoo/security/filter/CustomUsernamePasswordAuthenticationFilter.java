@@ -7,6 +7,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.web.authentication.RememberMeServices;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import javax.servlet.http.HttpServletRequest;
@@ -15,7 +16,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 public class CustomUsernamePasswordAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
-    public CustomUsernamePasswordAuthenticationFilter(AuthenticationManager authenticationManager) {
+    public CustomUsernamePasswordAuthenticationFilter(AuthenticationManager authenticationManager, RememberMeServices rememberMeServices) {
         super(authenticationManager);
         setFilterProcessesUrl("/login");
         setAuthenticationSuccessHandler(((request, response, authentication) -> {
@@ -30,6 +31,7 @@ public class CustomUsernamePasswordAuthenticationFilter extends UsernamePassword
 
             response.getWriter().write("failed");
         }));
+        setRememberMeServices(rememberMeServices);
     }
 
     @Override
@@ -43,7 +45,7 @@ public class CustomUsernamePasswordAuthenticationFilter extends UsernamePassword
 //            UserAuthenticationToken token = UserAuthenticationToken.builder()
 //                    .credentials(loginDto.getId())
 //                    .build();
-
+            request.setAttribute("rememberMe", loginDto.isRememberMe());
             return this.getAuthenticationManager().authenticate(new UsernamePasswordAuthenticationToken(loginDto.getId(), loginDto.getPassword()));
         } catch (IOException e) {
             throw new RuntimeException("Content Type is not application/json");
