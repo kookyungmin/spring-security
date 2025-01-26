@@ -23,12 +23,15 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.RememberMeServices;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.authentication.rememberme.JdbcTokenRepositoryImpl;
+import org.springframework.security.web.authentication.rememberme.PersistentTokenRepository;
 import org.springframework.security.web.authentication.rememberme.RememberMeAuthenticationFilter;
 import org.springframework.security.web.session.HttpSessionEventPublisher;
 
 import javax.annotation.PostConstruct;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSessionEvent;
+import javax.sql.DataSource;
 
 @Configuration
 @EnableWebSecurity(debug = true)
@@ -135,8 +138,21 @@ public class SecurityConfig {
     }
 
     @Bean
-    public RememberMeServices rememberMeServices() {
-        return new CustomRememberMeService("uniqueAndSecretKey", userService);
+    public RememberMeServices rememberMeServices(PersistentTokenRepository tokenRepository) {
+        return new CustomRememberMeService("uniqueAndSecretKey", userService, tokenRepository);
+    }
+
+    @Bean
+    public PersistentTokenRepository tokenRepository(DataSource dataSource) {
+        JdbcTokenRepositoryImpl jdbcTokenRepository = new JdbcTokenRepositoryImpl();
+
+        jdbcTokenRepository.setDataSource(dataSource);
+        try {
+            jdbcTokenRepository.removeUserTokens("test");
+        } catch (Exception e) {
+            jdbcTokenRepository.setCreateTableOnStartup(true);
+        }
+        return jdbcTokenRepository;
     }
 
 
