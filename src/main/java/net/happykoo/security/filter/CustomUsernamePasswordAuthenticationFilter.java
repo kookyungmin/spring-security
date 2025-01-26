@@ -9,6 +9,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.authentication.RememberMeServices;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.authentication.session.SessionAuthenticationStrategy;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -16,7 +17,9 @@ import java.io.IOException;
 import java.io.InputStream;
 
 public class CustomUsernamePasswordAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
-    public CustomUsernamePasswordAuthenticationFilter(AuthenticationManager authenticationManager, RememberMeServices rememberMeServices) {
+    public CustomUsernamePasswordAuthenticationFilter(AuthenticationManager authenticationManager,
+                                                      RememberMeServices rememberMeServices,
+                                                      SessionAuthenticationStrategy sessionAuthenticationStrategy) {
         super(authenticationManager);
         setFilterProcessesUrl("/login");
         setAuthenticationSuccessHandler(((request, response, authentication) -> {
@@ -32,6 +35,7 @@ public class CustomUsernamePasswordAuthenticationFilter extends UsernamePassword
             response.getWriter().write("failed");
         }));
         setRememberMeServices(rememberMeServices);
+        setSessionAuthenticationStrategy(sessionAuthenticationStrategy);
     }
 
     @Override

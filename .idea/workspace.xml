@@ -7,7 +7,9 @@
     <list default="true" id="f1415611-2111-477b-9306-e672bae89850" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/net/happykoo/security/config/SecurityConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/net/happykoo/security/config/SecurityConfig.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/net/happykoo/security/service/CustomRememberMeService.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/net/happykoo/security/service/CustomRememberMeService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/net/happykoo/security/domain/User.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/net/happykoo/security/domain/User.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/net/happykoo/security/filter/CustomUsernamePasswordAuthenticationFilter.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/net/happykoo/security/filter/CustomUsernamePasswordAuthenticationFilter.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/net/happykoo/security/principal/User.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/net/happykoo/security/principal/User.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -150,7 +152,7 @@
       <workItem from="1732667319368" duration="1194000" />
       <workItem from="1732841881554" duration="16132000" />
       <workItem from="1736144429115" duration="4363000" />
-      <workItem from="1737807224412" duration="7834000" />
+      <workItem from="1737807224412" duration="15462000" />
     </task>
     <servers />
   </component>
@@ -170,5 +172,31 @@
   </component>
   <component name="VgoProject">
     <settings-migrated>true</settings-migrated>
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.springframework.security/spring-security-web/5.7.6/e96e8e30d160d5787046ecd89e846f1c4091f9a8/spring-security-web-5.7.6-sources.jar!/org/springframework/security/web/authentication/session/ConcurrentSessionControlAuthenticationStrategy.java</url>
+          <line>102</line>
+          <option name="timeStamp" value="33" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.springframework.security/spring-security-web/5.7.6/e96e8e30d160d5787046ecd89e846f1c4091f9a8/spring-security-web-5.7.6-sources.jar!/org/springframework/security/web/authentication/session/ConcurrentSessionControlAuthenticationStrategy.java</url>
+          <line>146</line>
+          <option name="timeStamp" value="34" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.springframework.security/spring-security-web/5.7.6/e96e8e30d160d5787046ecd89e846f1c4091f9a8/spring-security-web-5.7.6-sources.jar!/org/springframework/security/web/authentication/session/ConcurrentSessionControlAuthenticationStrategy.java</url>
+          <line>155</line>
+          <option name="timeStamp" value="35" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
+    <pin-to-top-manager>
+      <pinned-members>
+        <PinnedItemInfo parentTag="org.springframework.security.web.authentication.session.ConcurrentSessionControlAuthenticationStrategy" memberName="sessionRegistry" />
+      </pinned-members>
+    </pin-to-top-manager>
   </component>
 </project>

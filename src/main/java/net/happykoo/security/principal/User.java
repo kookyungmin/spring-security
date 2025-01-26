@@ -3,6 +3,7 @@ package net.happykoo.security.principal;
 import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
 
+import java.util.Objects;
 import java.util.Set;
 
 @Getter

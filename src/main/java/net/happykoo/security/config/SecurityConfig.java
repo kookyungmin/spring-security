@@ -18,6 +18,8 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
+import org.springframework.security.core.session.SessionRegistry;
+import org.springframework.security.core.session.SessionRegistryImpl;
 import org.springframework.security.crypto.password.NoOpPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -26,12 +28,17 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.security.web.authentication.rememberme.JdbcTokenRepositoryImpl;
 import org.springframework.security.web.authentication.rememberme.PersistentTokenRepository;
 import org.springframework.security.web.authentication.rememberme.RememberMeAuthenticationFilter;
+import org.springframework.security.web.authentication.session.*;
+import org.springframework.security.web.session.ConcurrentSessionFilter;
 import org.springframework.security.web.session.HttpSessionEventPublisher;
+import org.springframework.security.web.session.SessionInformationExpiredStrategy;
 
 import javax.annotation.PostConstruct;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSessionEvent;
 import javax.sql.DataSource;
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity(debug = true)
@@ -44,6 +51,8 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http,
                                            AuthenticationManager authenticationManager,
+                                           SessionRegistry sessionRegistry,
+                                           SessionAuthenticationStrategy sessionAuthenticationStrategy,
                                            RememberMeServices rememberMeServices) throws Exception {
         //UsernameAndPasswordAuthenticationFilter 는 csrf token 필수!
         http.authorizeRequests((requests) -> {
@@ -55,7 +64,7 @@ public class SecurityConfig {
         .csrf().ignoringAntMatchers("/login", "/logout")
                 .and()
 //        .csrf().disable()
-        .addFilterBefore(new CustomUsernamePasswordAuthenticationFilter(authenticationManager, rememberMeServices),
+        .addFilterBefore(new CustomUsernamePasswordAuthenticationFilter(authenticationManager, rememberMeServices, sessionAuthenticationStrategy),
                 UsernamePasswordAuthenticationFilter.class)
         .exceptionHandling()
         .accessDeniedHandler((request, response, accessDeniedException) -> {
@@ -71,6 +80,16 @@ public class SecurityConfig {
         .and()
         .rememberMe(rememberMe -> rememberMe
                 .rememberMeServices(rememberMeServices)
+        )
+        .sessionManagement(s -> s.maximumSessions(1)
+            .maxSessionsPreventsLogin(true)
+            .sessionRegistry(sessionRegistry)
+            .expiredSessionStrategy((event) -> {
+                HttpServletResponse response = event.getResponse();
+                response.setContentType("application/json");
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.getWriter().write("{\"error\": \"Exceed Max Session\"}");
+            })
         )
         .logout()
         .logoutUrl("/logout") // 로그아웃 엔드포인트
@@ -115,6 +134,11 @@ public class SecurityConfig {
     }
 
     @Bean
+    public SessionRegistry sessionRegistry() {
+        return new SessionRegistryImpl();
+    }
+
+    @Bean
     public ServletListenerRegistrationBean<HttpSessionEventPublisher> httpSessionEventPublisher() {
         return new ServletListenerRegistrationBean<>(new HttpSessionEventPublisher() {
             @Override
@@ -153,6 +177,17 @@ public class SecurityConfig {
             jdbcTokenRepository.setCreateTableOnStartup(true);
         }
         return jdbcTokenRepository;
+    }
+
+    @Bean
+    public SessionAuthenticationStrategy sessionAuthenticationStrategy(SessionRegistry sessionRegistry) {
+        return new CompositeSessionAuthenticationStrategy(
+                List.of(
+//                        new SessionFixationProtectionStrategy(),
+                        new RegisterSessionAuthenticationStrategy(sessionRegistry),
+                        new ConcurrentSessionControlAuthenticationStrategy(sessionRegistry)
+                )
+        );
     }
 
 
