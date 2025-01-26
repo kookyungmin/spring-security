@@ -57,6 +57,7 @@ public class SecurityConfig {
         //UsernameAndPasswordAuthenticationFilter 는 csrf token 필수!
         http.authorizeRequests((requests) -> {
            requests.antMatchers("/login").permitAll()
+                   .antMatchers("/admin/**").hasRole("ADMIN")
                    .anyRequest().authenticated();
         })
         .formLogin().disable() //spring 이 기본적으로 제공하는 HTML나 MVC 패턴의 resource 이용
@@ -183,7 +184,6 @@ public class SecurityConfig {
     public SessionAuthenticationStrategy sessionAuthenticationStrategy(SessionRegistry sessionRegistry) {
         return new CompositeSessionAuthenticationStrategy(
                 List.of(
-//                        new SessionFixationProtectionStrategy(),
                         new RegisterSessionAuthenticationStrategy(sessionRegistry),
                         new ConcurrentSessionControlAuthenticationStrategy(sessionRegistry)
                 )
