@@ -10,6 +10,7 @@ import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.boot.web.servlet.ServletListenerRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.access.AccessDecisionManager;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -27,14 +28,13 @@ import org.springframework.security.web.authentication.RememberMeServices;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.authentication.rememberme.JdbcTokenRepositoryImpl;
 import org.springframework.security.web.authentication.rememberme.PersistentTokenRepository;
-import org.springframework.security.web.authentication.rememberme.RememberMeAuthenticationFilter;
-import org.springframework.security.web.authentication.session.*;
-import org.springframework.security.web.session.ConcurrentSessionFilter;
+import org.springframework.security.web.authentication.session.CompositeSessionAuthenticationStrategy;
+import org.springframework.security.web.authentication.session.ConcurrentSessionControlAuthenticationStrategy;
+import org.springframework.security.web.authentication.session.RegisterSessionAuthenticationStrategy;
+import org.springframework.security.web.authentication.session.SessionAuthenticationStrategy;
 import org.springframework.security.web.session.HttpSessionEventPublisher;
-import org.springframework.security.web.session.SessionInformationExpiredStrategy;
 
 import javax.annotation.PostConstruct;
-import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSessionEvent;
 import javax.sql.DataSource;
@@ -43,7 +43,6 @@ import java.util.List;
 @Configuration
 @EnableWebSecurity(debug = true)
 //prePost로 권한 설정 작동
-@EnableGlobalMethodSecurity(prePostEnabled = true)
 @RequiredArgsConstructor
 @Slf4j
 public class SecurityConfig {
@@ -65,7 +64,9 @@ public class SecurityConfig {
         .csrf().ignoringAntMatchers("/login", "/logout")
                 .and()
 //        .csrf().disable()
-        .addFilterBefore(new CustomUsernamePasswordAuthenticationFilter(authenticationManager, rememberMeServices, sessionAuthenticationStrategy),
+        .addFilterAt(new CustomUsernamePasswordAuthenticationFilter(authenticationManager,
+                        rememberMeServices,
+                        sessionAuthenticationStrategy),
                 UsernamePasswordAuthenticationFilter.class)
         .exceptionHandling()
         .accessDeniedHandler((request, response, accessDeniedException) -> {
