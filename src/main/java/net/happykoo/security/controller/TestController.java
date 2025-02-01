@@ -4,6 +4,7 @@ import net.happykoo.security.dto.SecurityMessage;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -37,5 +38,11 @@ public class TestController {
                 .auth(SecurityContextHolder.getContext().getAuthentication())
                 .message("Admin 정보")
                 .build();
+    }
+
+    @PreAuthorize("hasAuth(#name)")
+    @RequestMapping("/greeting/{name}")
+    public String hello(@PathVariable String name) {
+        return "Hello " + name;
     }
 }
