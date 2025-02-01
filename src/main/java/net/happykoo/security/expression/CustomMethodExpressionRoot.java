@@ -1,4 +1,4 @@
-package net.happykoo.security.expression_root;
+package net.happykoo.security.expression;
 
 import lombok.Getter;
 import lombok.Setter;

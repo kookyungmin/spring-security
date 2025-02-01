@@ -1,18 +1,17 @@
 package net.happykoo.security.config;
 
-import net.happykoo.security.expression_root.CustomMethodExpressionRoot;
+import net.happykoo.security.expression.CustomMethodExpressionRoot;
+import net.happykoo.security.expression.CustomPermissionEvaluator;
 import net.happykoo.security.voter.CustomVoter;
 import org.aopalliance.intercept.MethodInvocation;
-import org.springframework.cglib.proxy.MethodInterceptor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.AccessDecisionManager;
 import org.springframework.security.access.AccessDecisionVoter;
 import org.springframework.security.access.expression.method.DefaultMethodSecurityExpressionHandler;
 import org.springframework.security.access.expression.method.ExpressionBasedPreInvocationAdvice;
 import org.springframework.security.access.expression.method.MethodSecurityExpressionHandler;
 import org.springframework.security.access.expression.method.MethodSecurityExpressionOperations;
-import org.springframework.security.access.intercept.aopalliance.MethodSecurityInterceptor;
 import org.springframework.security.access.prepost.PreInvocationAuthorizationAdviceVoter;
-import org.springframework.security.access.vote.AffirmativeBased;
 import org.springframework.security.access.vote.AuthenticatedVoter;
 import org.springframework.security.access.vote.ConsensusBased;
 import org.springframework.security.access.vote.RoleVoter;
@@ -26,14 +25,19 @@ import java.util.List;
 //FilterSecurityInterceptor, MethodSecurityInterceptor 별로 DecisionManager 가 다름
 @EnableGlobalMethodSecurity(prePostEnabled = true)
 public class MethodSecurityConfiguration extends GlobalMethodSecurityConfiguration {
+    @Autowired
+    private CustomPermissionEvaluator permissionEvaluator;
     @Override
     protected MethodSecurityExpressionHandler createExpressionHandler() {
-        MethodSecurityExpressionHandler handler = new DefaultMethodSecurityExpressionHandler() {
+        DefaultMethodSecurityExpressionHandler handler = new DefaultMethodSecurityExpressionHandler() {
             @Override
             protected MethodSecurityExpressionOperations createSecurityExpressionRoot(Authentication authentication, MethodInvocation invocation) {
-                return new CustomMethodExpressionRoot(authentication, invocation);
+                CustomMethodExpressionRoot expressionRoot = new CustomMethodExpressionRoot(authentication, invocation);;
+                expressionRoot.setPermissionEvaluator(getPermissionEvaluator());
+                return expressionRoot;
             }
         };
+        handler.setPermissionEvaluator(permissionEvaluator);
         return handler;
     }
 

@@ -40,7 +40,8 @@ public class TestController {
                 .build();
     }
 
-    @PreAuthorize("hasAuth(#name)")
+//    @PreAuthorize("hasAuth(#name)")
+    @PreAuthorize("hasPermission(#name, 'user', 'read')")
     @RequestMapping("/greeting/{name}")
     public String hello(@PathVariable String name) {
         return "Hello " + name;
