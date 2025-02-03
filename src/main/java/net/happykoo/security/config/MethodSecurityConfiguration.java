@@ -2,6 +2,7 @@ package net.happykoo.security.config;
 
 import net.happykoo.security.expression.CustomMethodExpressionRoot;
 import net.happykoo.security.expression.CustomPermissionEvaluator;
+import net.happykoo.security.metadatasource.CustomMetaDataSource;
 import net.happykoo.security.voter.CustomVoter;
 import org.aopalliance.intercept.MethodInvocation;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,6 +12,7 @@ import org.springframework.security.access.expression.method.DefaultMethodSecuri
 import org.springframework.security.access.expression.method.ExpressionBasedPreInvocationAdvice;
 import org.springframework.security.access.expression.method.MethodSecurityExpressionHandler;
 import org.springframework.security.access.expression.method.MethodSecurityExpressionOperations;
+import org.springframework.security.access.method.MethodSecurityMetadataSource;
 import org.springframework.security.access.prepost.PreInvocationAuthorizationAdviceVoter;
 import org.springframework.security.access.vote.AuthenticatedVoter;
 import org.springframework.security.access.vote.ConsensusBased;
@@ -23,10 +25,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 //FilterSecurityInterceptor, MethodSecurityInterceptor 별로 DecisionManager 가 다름
-@EnableGlobalMethodSecurity(prePostEnabled = true)
+@EnableGlobalMethodSecurity(prePostEnabled = true, securedEnabled = true)
 public class MethodSecurityConfiguration extends GlobalMethodSecurityConfiguration {
     @Autowired
     private CustomPermissionEvaluator permissionEvaluator;
+
+    @Override
+    protected MethodSecurityMetadataSource customMethodSecurityMetadataSource() {
+        return new CustomMetaDataSource();
+    }
+
+
     @Override
     protected MethodSecurityExpressionHandler createExpressionHandler() {
         DefaultMethodSecurityExpressionHandler handler = new DefaultMethodSecurityExpressionHandler() {
@@ -55,10 +64,10 @@ public class MethodSecurityConfiguration extends GlobalMethodSecurityConfigurati
 
 //        return new AffirmativeBased(decisionVoters);
 //        return new ConsensusBased(decisionVoters);
-        ConsensusBased commitee = new ConsensusBased(decisionVoters);
+        ConsensusBased committee = new ConsensusBased(decisionVoters);
         //deny, allow 가 동일하면 deny 하게 설정
-        commitee.setAllowIfEqualGrantedDeniedDecisions(false);
+        committee.setAllowIfEqualGrantedDeniedDecisions(false);
 
-        return commitee;
+        return committee;
     }
 }

@@ -1,6 +1,7 @@
 package net.happykoo.security.controller;
 
 import net.happykoo.security.dto.SecurityMessage;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -46,4 +47,12 @@ public class TestController {
     public String hello(@PathVariable String name) {
         return "Hello " + name;
     }
+
+//    @Secured("TEST_USER") //SecuredAnnotaionSecurityMetadataSource 이용 -> CustomMetadataSource 작성 가능
+    @RequestMapping("/bye/{name}")
+    public String bye(@PathVariable String name) {
+        return "Bye" + name;
+    }
+
+
 }
