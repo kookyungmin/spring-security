@@ -1,49 +1,62 @@
 package net.happykoo.security.config;
 
 import lombok.RequiredArgsConstructor;
-import net.happykoo.security.authentication.UserAuthenticationProvider;
-import net.happykoo.security.domain.Authority;
+import lombok.extern.slf4j.Slf4j;
 import net.happykoo.security.domain.User;
 import net.happykoo.security.filter.CustomUsernamePasswordAuthenticationFilter;
+import net.happykoo.security.service.CustomRememberMeService;
 import net.happykoo.security.service.UserService;
 import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
+import org.springframework.boot.web.servlet.ServletListenerRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.access.AccessDecisionManager;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.core.session.SessionRegistry;
+import org.springframework.security.core.session.SessionRegistryImpl;
 import org.springframework.security.crypto.password.NoOpPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.RememberMeServices;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.authentication.rememberme.JdbcTokenRepositoryImpl;
+import org.springframework.security.web.authentication.rememberme.PersistentTokenRepository;
+import org.springframework.security.web.authentication.session.CompositeSessionAuthenticationStrategy;
+import org.springframework.security.web.authentication.session.ConcurrentSessionControlAuthenticationStrategy;
+import org.springframework.security.web.authentication.session.RegisterSessionAuthenticationStrategy;
+import org.springframework.security.web.authentication.session.SessionAuthenticationStrategy;
+import org.springframework.security.web.session.HttpSessionEventPublisher;
 
 import javax.annotation.PostConstruct;
 import javax.servlet.http.HttpServletResponse;
-import java.nio.file.Path;
-import java.util.Set;
+import javax.servlet.http.HttpSessionEvent;
+import javax.sql.DataSource;
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity(debug = true)
 //prePost로 권한 설정 작동
-@EnableGlobalMethodSecurity(prePostEnabled = true)
 @RequiredArgsConstructor
+@Slf4j
 public class SecurityConfig {
     private final UserService userService;
-
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http,
-                                           AuthenticationManager authenticationManager) throws Exception {
+                                           AuthenticationManager authenticationManager,
+                                           SessionRegistry sessionRegistry,
+                                           SessionAuthenticationStrategy sessionAuthenticationStrategy,
+                                           RememberMeServices rememberMeServices) throws Exception {
         //UsernameAndPasswordAuthenticationFilter 는 csrf token 필수!
         http.authorizeRequests((requests) -> {
            requests.antMatchers("/login").permitAll()
+                   .antMatchers("/admin/**").hasRole("ADMIN")
                    .anyRequest().authenticated();
         })
         .formLogin().disable() //spring 이 기본적으로 제공하는 HTML나 MVC 패턴의 resource 이용
@@ -51,7 +64,10 @@ public class SecurityConfig {
         .csrf().ignoringAntMatchers("/login", "/logout")
                 .and()
 //        .csrf().disable()
-        .addFilterBefore(new CustomUsernamePasswordAuthenticationFilter(authenticationManager), UsernamePasswordAuthenticationFilter.class)
+        .addFilterAt(new CustomUsernamePasswordAuthenticationFilter(authenticationManager,
+                        rememberMeServices,
+                        sessionAuthenticationStrategy),
+                UsernamePasswordAuthenticationFilter.class)
         .exceptionHandling()
         .accessDeniedHandler((request, response, accessDeniedException) -> {
            response.setContentType("application/json");
@@ -64,6 +80,19 @@ public class SecurityConfig {
             response.getWriter().write("{\"error\": \"UnAuthorized\"}");
         }))
         .and()
+        .rememberMe(rememberMe -> rememberMe
+                .rememberMeServices(rememberMeServices)
+        )
+        .sessionManagement(s -> s.maximumSessions(1)
+            .maxSessionsPreventsLogin(true)
+            .sessionRegistry(sessionRegistry)
+            .expiredSessionStrategy((event) -> {
+                HttpServletResponse response = event.getResponse();
+                response.setContentType("application/json");
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.getWriter().write("{\"error\": \"Exceed Max Session\"}");
+            })
+        )
         .logout()
         .logoutUrl("/logout") // 로그아웃 엔드포인트
         .logoutSuccessHandler((request, response, authentication) -> {
@@ -101,10 +130,67 @@ public class SecurityConfig {
     }
 
     @Bean
-    PasswordEncoder passwordEncoder() {
+    public PasswordEncoder passwordEncoder() {
 //        return new BCryptPasswordEncoder();
         return NoOpPasswordEncoder.getInstance();
     }
+
+    @Bean
+    public SessionRegistry sessionRegistry() {
+        return new SessionRegistryImpl();
+    }
+
+    @Bean
+    public ServletListenerRegistrationBean<HttpSessionEventPublisher> httpSessionEventPublisher() {
+        return new ServletListenerRegistrationBean<>(new HttpSessionEventPublisher() {
+            @Override
+            public void sessionCreated(HttpSessionEvent event) {
+                super.sessionCreated(event);
+                log.info("####### session created! {}", event.getSession().getId());
+            }
+
+            @Override
+            public void sessionDestroyed(HttpSessionEvent event) {
+                super.sessionDestroyed(event);
+                log.info("####### session destroyed! {}", event.getSession().getId());
+            }
+
+            @Override
+            public void sessionIdChanged(HttpSessionEvent event, String oldSessionId) {
+                super.sessionIdChanged(event, oldSessionId);
+                log.info("####### session changed! {} > {}", oldSessionId, event.getSession().getId());
+            }
+        });
+    }
+
+    @Bean
+    public RememberMeServices rememberMeServices(PersistentTokenRepository tokenRepository) {
+        return new CustomRememberMeService("uniqueAndSecretKey", userService, tokenRepository);
+    }
+
+    @Bean
+    public PersistentTokenRepository tokenRepository(DataSource dataSource) {
+        JdbcTokenRepositoryImpl jdbcTokenRepository = new JdbcTokenRepositoryImpl();
+
+        jdbcTokenRepository.setDataSource(dataSource);
+        try {
+            jdbcTokenRepository.removeUserTokens("test");
+        } catch (Exception e) {
+            jdbcTokenRepository.setCreateTableOnStartup(true);
+        }
+        return jdbcTokenRepository;
+    }
+
+    @Bean
+    public SessionAuthenticationStrategy sessionAuthenticationStrategy(SessionRegistry sessionRegistry) {
+        return new CompositeSessionAuthenticationStrategy(
+                List.of(
+                        new RegisterSessionAuthenticationStrategy(sessionRegistry),
+                        new ConcurrentSessionControlAuthenticationStrategy(sessionRegistry)
+                )
+        );
+    }
+
 
     @PostConstruct
     public void initializeDb() {

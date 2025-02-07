@@ -1,9 +1,11 @@
 package net.happykoo.security.controller;
 
 import net.happykoo.security.dto.SecurityMessage;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -38,4 +40,19 @@ public class TestController {
                 .message("Admin 정보")
                 .build();
     }
+
+//    @PreAuthorize("hasAuth(#name)")
+    @PreAuthorize("hasPermission(#name, 'user', 'read')")
+    @RequestMapping("/greeting/{name}")
+    public String hello(@PathVariable String name) {
+        return "Hello " + name;
+    }
+
+//    @Secured("TEST_USER") //SecuredAnnotaionSecurityMetadataSource 이용 -> CustomMetadataSource 작성 가능
+    @RequestMapping("/bye/{name}")
+    public String bye(@PathVariable String name) {
+        return "Bye" + name;
+    }
+
+
 }

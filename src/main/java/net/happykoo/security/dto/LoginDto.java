@@ -10,4 +10,5 @@ import lombok.*;
 public class LoginDto {
     private String id;
     private String password;
+    private boolean rememberMe;
 }
