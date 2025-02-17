@@ -10,7 +10,7 @@ import java.time.Instant;
 public class JwtUtil {
     private static SignatureAlgorithm algorithm = SignatureAlgorithm.HS512;
     private static String secretKey = "happykoo";
-    private static final long ATK_EXPIRED_TIME = 20 * 60;
+    private static final long ATK_EXPIRED_TIME = 2;
     private static final long RTK_EXPIRED_TIME = 60 * 60 * 24 * 7;
 
     public static String createAccessToken(User user) {
@@ -18,6 +18,14 @@ public class JwtUtil {
                 .setSubject(user.getUsername())
                 .signWith(algorithm, secretKey)
                 .claim("exp", Instant.now().getEpochSecond() * ATK_EXPIRED_TIME)
+                .compact();
+    }
+
+    public static String createRefreshToken(User user) {
+        return Jwts.builder()
+                .setSubject(user.getUsername())
+                .signWith(algorithm, secretKey)
+                .claim("exp", Instant.now().getEpochSecond() * RTK_EXPIRED_TIME)
                 .compact();
     }
 

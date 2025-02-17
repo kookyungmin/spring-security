@@ -53,7 +53,9 @@ public class JWTAuthenticationFilter extends UsernamePasswordAuthenticationFilte
     protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain, Authentication authResult) throws IOException, ServletException {
         User user = (User) authResult.getPrincipal();
 
-        response.setHeader(HttpHeaders.AUTHORIZATION, "Bearer " + JwtUtil.createAccessToken(user));
+//        response.setHeader(HttpHeaders.AUTHORIZATION, "Bearer " + JwtUtil.createAccessToken(user));
+        response.setHeader("ATK", JwtUtil.createAccessToken(user));
+        response.setHeader("RTK", JwtUtil.createRefreshToken(user));
         response.setHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
         response.getOutputStream().write(mapper.writeValueAsBytes(user));
     }
