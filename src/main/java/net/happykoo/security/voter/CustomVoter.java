@@ -23,7 +23,7 @@ public class CustomVoter implements AccessDecisionVoter<MethodInvocation> {
     @Override
     public int vote(Authentication authentication, MethodInvocation object, Collection<ConfigAttribute> attributes) {
         String role = attributes.stream()
-                .filter(attr -> attr.getAttribute().startsWith(PREFIX))
+                .filter(attr -> Objects.nonNull(attr.getAttribute()) && attr.getAttribute().startsWith(PREFIX))
                 .map(attr -> attr.getAttribute().substring(PREFIX.length()))
                 .findFirst()
                 .orElse(null);

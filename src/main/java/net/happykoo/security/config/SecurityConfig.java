@@ -4,6 +4,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.happykoo.security.domain.User;
 import net.happykoo.security.filter.CustomUsernamePasswordAuthenticationFilter;
+import net.happykoo.security.filter.JWTAuthenticationFilter;
+import net.happykoo.security.filter.JWTCheckFilter;
 import net.happykoo.security.service.CustomRememberMeService;
 import net.happykoo.security.service.UserService;
 import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
@@ -19,6 +21,8 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.security.core.session.SessionRegistryImpl;
 import org.springframework.security.crypto.password.NoOpPasswordEncoder;
@@ -32,6 +36,7 @@ import org.springframework.security.web.authentication.session.CompositeSessionA
 import org.springframework.security.web.authentication.session.ConcurrentSessionControlAuthenticationStrategy;
 import org.springframework.security.web.authentication.session.RegisterSessionAuthenticationStrategy;
 import org.springframework.security.web.authentication.session.SessionAuthenticationStrategy;
+import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 import org.springframework.security.web.session.HttpSessionEventPublisher;
 
 import javax.annotation.PostConstruct;
@@ -47,63 +52,29 @@ import java.util.List;
 @Slf4j
 public class SecurityConfig {
     private final UserService userService;
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http,
-                                           AuthenticationManager authenticationManager,
-                                           SessionRegistry sessionRegistry,
-                                           SessionAuthenticationStrategy sessionAuthenticationStrategy,
-                                           RememberMeServices rememberMeServices) throws Exception {
-        //UsernameAndPasswordAuthenticationFilter 는 csrf token 필수!
-        http.authorizeRequests((requests) -> {
-           requests.antMatchers("/login").permitAll()
-                   .antMatchers("/admin/**").hasRole("ADMIN")
-                   .anyRequest().authenticated();
-        })
-        .formLogin().disable() //spring 이 기본적으로 제공하는 HTML나 MVC 패턴의 resource 이용
-        .httpBasic().disable()
-        .csrf().ignoringAntMatchers("/login", "/logout")
-                .and()
-//        .csrf().disable()
-        .addFilterAt(new CustomUsernamePasswordAuthenticationFilter(authenticationManager,
-                        rememberMeServices,
-                        sessionAuthenticationStrategy),
-                UsernamePasswordAuthenticationFilter.class)
-        .exceptionHandling()
-        .accessDeniedHandler((request, response, accessDeniedException) -> {
-           response.setContentType("application/json");
-           response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-           response.getWriter().write("{\"error\": \"ForBidden\"}");
-        })
-        .authenticationEntryPoint(((request, response, authException) -> {
-            response.setContentType("application/json");
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.getWriter().write("{\"error\": \"UnAuthorized\"}");
-        }))
-        .and()
-        .rememberMe(rememberMe -> rememberMe
-                .rememberMeServices(rememberMeServices)
-        )
-        .sessionManagement(s -> s.maximumSessions(1)
-            .maxSessionsPreventsLogin(true)
-            .sessionRegistry(sessionRegistry)
-            .expiredSessionStrategy((event) -> {
-                HttpServletResponse response = event.getResponse();
-                response.setContentType("application/json");
-                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                response.getWriter().write("{\"error\": \"Exceed Max Session\"}");
-            })
-        )
-        .logout()
-        .logoutUrl("/logout") // 로그아웃 엔드포인트
-        .logoutSuccessHandler((request, response, authentication) -> {
-            response.setContentType("application/json");
-            response.setStatus(HttpServletResponse.SC_OK);
-            response.getWriter().write("{\"message\": \"Logout successful\"}");
-        })
-        .invalidateHttpSession(true)
-        .deleteCookies("JSESSIONID");
+                                           JWTCheckFilter jwtCheckFilter,
+                                           JWTAuthenticationFilter jwtAuthenticationFilter) throws Exception {
+        http.csrf()
+                .disable()
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .addFilterAt(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class) //로그인
+                .addFilterAt(jwtCheckFilter, BasicAuthenticationFilter.class); //token 검증
 
         return http.build();
+    }
+
+    @Bean
+    public JWTCheckFilter jwtCheckFilter(AuthenticationManager authenticationManager,
+                                         UserService userService) {
+        return new JWTCheckFilter(authenticationManager, userService);
+    }
+
+    @Bean
+    public JWTAuthenticationFilter jwtAuthenticationFilter(AuthenticationManager authenticationManager) {
+        return new JWTAuthenticationFilter(authenticationManager);
     }
 
     //role hierarchy 설정
