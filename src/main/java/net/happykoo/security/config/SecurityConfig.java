@@ -3,31 +3,29 @@ package net.happykoo.security.config;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.happykoo.security.domain.User;
-import net.happykoo.security.filter.CustomUsernamePasswordAuthenticationFilter;
 import net.happykoo.security.filter.JWTAuthenticationFilter;
 import net.happykoo.security.filter.JWTCheckFilter;
+import net.happykoo.security.service.CustomOAuth2SuccessHandler;
 import net.happykoo.security.service.CustomRememberMeService;
 import net.happykoo.security.service.UserService;
 import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.boot.web.servlet.ServletListenerRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.access.AccessDecisionManager;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
-import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.security.core.session.SessionRegistryImpl;
 import org.springframework.security.crypto.password.NoOpPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.RememberMeServices;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.authentication.rememberme.JdbcTokenRepositoryImpl;
@@ -40,7 +38,6 @@ import org.springframework.security.web.authentication.www.BasicAuthenticationFi
 import org.springframework.security.web.session.HttpSessionEventPublisher;
 
 import javax.annotation.PostConstruct;
-import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSessionEvent;
 import javax.sql.DataSource;
 import java.util.List;
@@ -61,9 +58,19 @@ public class SecurityConfig {
                 .disable()
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterAt(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class) //로그인
-                .addFilterAt(jwtCheckFilter, BasicAuthenticationFilter.class); //token 검증
+                .addFilterAt(jwtCheckFilter, BasicAuthenticationFilter.class) //token 검증
+                .oauth2Login(oauth2 -> oauth2
+                        .authorizationEndpoint(authorization -> authorization.baseUri("/test/oauth2/authorization"))
+                        .redirectionEndpoint(redirection -> redirection.baseUri("/test/oauth2/callback/*"))
+                        .successHandler(customOAuth2SuccessHandler()))
+                .exceptionHandling()
+                .authenticationEntryPoint(((request, response, authException) -> { response.getWriter().write("FAILED");}));
 
         return http.build();
+    }
+
+    private AuthenticationSuccessHandler customOAuth2SuccessHandler() {
+        return new CustomOAuth2SuccessHandler();
     }
 
     @Bean

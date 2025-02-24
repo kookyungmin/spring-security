@@ -2,6 +2,16 @@ server:
   port: 18888
 spring:
   security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: 1020548332803-a811bp7gehd949ft1p5chjsndcap695e.apps.googleusercontent.com
+            client-secret: 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
+            scope:
+              - email
+              - profile
+            redirect-uri: "{baseUrl}/test/oauth2/callback/{registrationId}"
     user:
       name: user1
       password: 1111
