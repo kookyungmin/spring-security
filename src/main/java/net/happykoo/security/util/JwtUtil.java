@@ -3,7 +3,6 @@ package net.happykoo.security.util;
 import io.jsonwebtoken.*;
 import lombok.extern.slf4j.Slf4j;
 import net.happykoo.security.domain.User;
-
 import java.time.Instant;
 
 @Slf4j
